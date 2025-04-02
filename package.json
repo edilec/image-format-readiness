@@ -1,6 +1,6 @@
 {
   "name": "image-format-readiness",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Check image format, dimensions, compression and loading strategy readiness.",
   "type": "module",
   "engines": {
