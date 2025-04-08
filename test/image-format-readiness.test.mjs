@@ -324,6 +324,23 @@ test('valid case-insensitive loading and leading-zero dimensions do not raise fi
   assert.equal(report.images[0].loading, 'lazy')
 })
 
+test('unsupported loading is explicit unknown without echoing control evidence', async () => {
+  const root = await fixture()
+  const opts = { root, html: join(root, 'page.html'), matrix: join(root, 'matrix.json') }
+  assert.equal((await checkImageReadiness(opts)).images[0].loading, 'lazy')
+  for (const value of ['lazy\u0085', 'lazy\u202e', 'auto']) {
+    await writeFile(join(root, 'page.html'), `<img src="photo.png" width="40" height="20" alt="" loading="${value}">`)
+    const report = await checkImageReadiness(opts)
+    assert.equal(report.status, 'incomplete')
+    assert.equal(report.images[0].loading, 'unknown')
+    assert.equal(report.findings.some(f => f.ruleId === 'loading-unsupported'), true)
+    assert.equal(JSON.stringify(report).includes(value), false)
+    const cliRun = run(root)
+    assert.equal(cliRun.status, 2)
+    assert.equal(cliRun.stdout.includes(value), false)
+  }
+})
+
 test('report never prints alternative text and uses code-unit pointer order', async () => {
   const tags = Array.from({ length: 11 }, () => '<img src="photo.png" width="40" height="20" loading="lazy">').join('')
   const root = await fixture(tags)

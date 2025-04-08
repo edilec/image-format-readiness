@@ -224,7 +224,10 @@ export async function inspectImageReadiness({ root, html, matrix, limits: custom
         checked += 1
         const rel = relative(base, actual)
         if (clean(rel) !== rel) throw new EvidenceError('path-unsupported')
-        images.push({ file: clean(rel), format: meta.format, intrinsicWidth: meta.width, intrinsicHeight: meta.height, bytes: meta.bytes, altPresent: attrs.alt !== undefined, altEmpty: attrs.alt === '', loading: attrs.loading === undefined ? null : attrs.loading?.toLowerCase(), declaredWidth: attrs.width === undefined ? null : Number(attrs.width), declaredHeight: attrs.height === undefined ? null : Number(attrs.height) })
+        const loading = attrs.loading === undefined ? null
+          : typeof attrs.loading === 'string' && ['eager', 'lazy'].includes(attrs.loading.toLowerCase())
+            ? attrs.loading.toLowerCase() : 'unknown'
+        images.push({ file: clean(rel), format: meta.format, intrinsicWidth: meta.width, intrinsicHeight: meta.height, bytes: meta.bytes, altPresent: attrs.alt !== undefined, altEmpty: attrs.alt === '', loading, declaredWidth: attrs.width === undefined ? null : Number(attrs.width), declaredHeight: attrs.height === undefined ? null : Number(attrs.height) })
         if (!seen.has(actual)) {
           seen.add(actual); total += BigInt(meta.bytes)
           if (meta.bytes > limits.maxImageBytes) add('image-byte-budget-exceeded', 'error', pointer, 'Image exceeds its byte budget.')
@@ -238,7 +241,7 @@ export async function inspectImageReadiness({ root, html, matrix, limits: custom
         if (attrs.alt === undefined) add('alt-undeclared', 'error', pointer, 'Alternative text declaration is missing.')
         else if (attrs.alt === null || clean(attrs.alt) !== attrs.alt) throw new EvidenceError('alt-unsupported')
         if (attrs.loading === undefined) add('loading-undeclared', 'info', pointer, 'Loading strategy is not declared.')
-        else if (!['eager', 'lazy'].includes(attrs.loading?.toLowerCase())) throw new EvidenceError('loading-unsupported')
+        else if (loading === 'unknown') throw new EvidenceError('loading-unsupported')
         if (attrs.srcset !== undefined) throw new EvidenceError('html-unsupported')
       } catch (error) { unknown(error.code ?? 'image-unreadable', pointer) }
     }
