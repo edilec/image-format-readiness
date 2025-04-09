@@ -63,7 +63,8 @@ async function boundedText(path, maxBytes) {
 async function confined(path, root) {
   let actual
   try { actual = await realpath(path) } catch { throw new EvidenceError('unreadable') }
-  if (actual !== root && !actual.startsWith(root + sep)) throw new EvidenceError('outside-root')
+  const prefix = root.endsWith(sep) ? root : root + sep
+  if (actual !== root && !actual.startsWith(prefix)) throw new EvidenceError('outside-root')
   return actual
 }
 

@@ -109,7 +109,8 @@ export async function assertWritableDestination(destination, options = {}) {
 
   if (root !== null) {
     const base = await realpath(resolve(root))
-    if (parent !== base && !parent.startsWith(base + sep)) {
+    const prefix = base.endsWith(sep) ? base : base + sep
+    if (parent !== base && !parent.startsWith(prefix)) {
       throw new DestinationError(
         `${label} resolves to ${parent}, which is outside the permitted root. `
         + `A link or a "..\" segment on the way there does not widen it.`,

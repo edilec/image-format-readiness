@@ -185,6 +185,31 @@ test('safe new and existing report files exactly match stdout', async () => {
   }
 })
 
+test('filesystem-root scope accepts clean absolute inputs and safe report but refuses aliases', async () => {
+  const root = await fixture()
+  assert.equal(run(root).status, 0)
+  const invoke = report => spawnSync(node, [cli, '--root', '/', '--html', join(root, 'page.html'),
+    '--matrix', join(root, 'matrix.json'), '--report', report, '--json'], { encoding: 'utf8' })
+  const safe = join(root, 'root-report.json')
+  const good = invoke(safe)
+  assert.equal(good.status, 0, good.stdout || good.stderr)
+  assert.equal(JSON.parse(good.stdout).status, 'pass')
+  assert.equal(await readFile(safe, 'utf8'), good.stdout)
+  const htmlBefore = await readFile(join(root, 'page.html'))
+  const direct = invoke(join(root, 'page.html'))
+  assert.equal(direct.status, 2)
+  assert.equal(JSON.parse(direct.stdout).status, 'incomplete')
+  assert.equal(JSON.parse(direct.stdout).findings.some(f => f.ruleId === 'report-write-refused'), true)
+  assert.deepEqual(await readFile(join(root, 'page.html')), htmlBefore)
+  await symlink('root-alias-report.json', join(root, 'alias.png'))
+  await writeFile(join(root, 'page.html'), '<img src="alias.png" width="40" height="20" alt="" loading="lazy">')
+  const aliasOut = join(root, 'root-alias-report.json')
+  const alias = invoke(aliasOut)
+  assert.equal(alias.status, 2)
+  assert.equal(JSON.parse(alias.stdout).findings.some(f => f.ruleId === 'report-write-refused'), true)
+  await assert.rejects(readFile(aliasOut), { code: 'ENOENT' })
+})
+
 test('report destinations refuse direct, symlink, escaping-parent, and hardlink aliases', async () => {
   const root = await fixture()
   const original = await readFile(join(root, 'page.html'))
