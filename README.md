@@ -28,7 +28,7 @@ The matrix is a supplied, pinned policy export: `schemaVersion: "1"`, a visible 
 | `loading-undeclared` | info | Neither `loading="eager"` nor `loading="lazy"` was declared. |
 | `format-not-in-matrix` | error | The observed header format is absent from a pinned browser row. |
 
-Incomplete evidence uses a separate warning diagnostic, never a clean verdict: unreadable or malformed files, unsupported image headers, ambiguous HTML, unsupported `src` forms, out-of-root links, missing images, and exceeded processing limits. A document with no image references is `no-images` incomplete. The report's `images` array records only bounded root-relative paths, header format/dimensions/bytes, and safe attribute declarations; it never prints alternative text or page prose. Findings are sorted by UTF-16 code units.
+Incomplete evidence uses a separate warning diagnostic, never a clean verdict: unreadable or malformed files, unsupported image headers, ambiguous HTML, unsupported `src` forms, out-of-root links, missing images, and exceeded processing limits. A document with no image references is `no-images` incomplete. The report's `images` array records only bounded root-relative path labels, header format/dimensions/bytes, and safe attribute declarations; it never prints alternative text or page prose. A local path is not rejected merely for exceeding the label length: labels over 160 UTF-16 units show a short prefix, original length, and SHA-256 of the full UTF-16 path to distinguish similar names. Findings are sorted by UTF-16 code units.
 
 ## Limits and exit codes
 

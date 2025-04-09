@@ -1,4 +1,5 @@
 import { open, readFile, realpath, stat } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import { dirname, relative, resolve, sep } from 'node:path'
 import { JsonError, parseUniqueJson } from './json.mjs'
 
@@ -17,10 +18,19 @@ const defaults = Object.freeze({ maxMatrixBytes: 65_536, maxHtmlBytes: 1_048_576
 const formats = new Set(['png', 'jpeg', 'gif', 'webp'])
 const clean = s => String(s).replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}\p{Default_Ignorable_Code_Point}]/gu, '').slice(0, 160)
 const visible = s => typeof s === 'string' && clean(s).trim().length > 0 && clean(s) === s && s.length <= 160
+const safeLocalPath = s => typeof s === 'string' && !/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}\p{Default_Ignorable_Code_Point}]/u.test(s)
 const codeUnit = (a, b) => a === b ? 0 : a < b ? -1 : 1
 
 export class ConfigurationError extends Error { constructor(code) { super(code); this.code = code } }
 class EvidenceError extends Error { constructor(code) { super(code); this.code = code } }
+
+function pathLabel(path) {
+  if (!safeLocalPath(path)) throw new EvidenceError('path-unsupported')
+  if (path.length <= 160) return path
+  const prefix = Array.from(path).slice(0, 24).join('')
+  const digest = createHash('sha256').update(path, 'utf16le').digest('hex')
+  return `${prefix}… [utf16len:${path.length},sha256:${digest}]`
+}
 
 function limitsOf(custom = {}) {
   if (!custom || Array.isArray(custom) || typeof custom !== 'object') throw new ConfigurationError('invalid-limits')
@@ -173,7 +183,7 @@ function imageHeader(bytes) {
 }
 
 function localSource(src, root, documentDir) {
-  if (typeof src !== 'string' || !src || /[?#%&\\]/u.test(src) || /^(?:[A-Za-z][A-Za-z0-9+.-]*:|\/\/)/u.test(src) || clean(src) !== src) throw new EvidenceError('source-unsupported')
+  if (typeof src !== 'string' || !src || /[?#%&\\]/u.test(src) || /^(?:[A-Za-z][A-Za-z0-9+.-]*:|\/\/)/u.test(src) || !safeLocalPath(src)) throw new EvidenceError('source-unsupported')
   return src.startsWith('/') ? resolve(root, '.' + src) : resolve(documentDir, src)
 }
 
@@ -199,8 +209,7 @@ export async function inspectImageReadiness({ root, html, matrix, limits: custom
   try {
     tick()
     const htmlPath = await confined(resolve(html), base)
-    documentFile = clean(relative(base, htmlPath)) || 'document'
-    if (documentFile !== relative(base, htmlPath)) throw new EvidenceError('path-unsupported')
+    documentFile = pathLabel(relative(base, htmlPath)) || 'document'
     const references = scanHtml(await boundedText(htmlPath, limits.maxHtmlBytes), limits.maxImageReferences)
     if (references.length === 0) unknown('no-images')
     const cache = new Map(); const seen = new Set(); let total = 0n
@@ -223,11 +232,11 @@ export async function inspectImageReadiness({ root, html, matrix, limits: custom
         }
         checked += 1
         const rel = relative(base, actual)
-        if (clean(rel) !== rel) throw new EvidenceError('path-unsupported')
+        const imageFile = pathLabel(rel)
         const loading = attrs.loading === undefined ? null
           : typeof attrs.loading === 'string' && ['eager', 'lazy'].includes(attrs.loading.toLowerCase())
             ? attrs.loading.toLowerCase() : 'unknown'
-        images.push({ file: clean(rel), format: meta.format, intrinsicWidth: meta.width, intrinsicHeight: meta.height, bytes: meta.bytes, altPresent: attrs.alt !== undefined, altEmpty: attrs.alt === '', loading, declaredWidth: attrs.width === undefined ? null : Number(attrs.width), declaredHeight: attrs.height === undefined ? null : Number(attrs.height) })
+        images.push({ file: imageFile, format: meta.format, intrinsicWidth: meta.width, intrinsicHeight: meta.height, bytes: meta.bytes, altPresent: attrs.alt !== undefined, altEmpty: attrs.alt === '', loading, declaredWidth: attrs.width === undefined ? null : Number(attrs.width), declaredHeight: attrs.height === undefined ? null : Number(attrs.height) })
         if (!seen.has(actual)) {
           seen.add(actual); total += BigInt(meta.bytes)
           if (meta.bytes > limits.maxImageBytes) add('image-byte-budget-exceeded', 'error', pointer, 'Image exceeds its byte budget.')

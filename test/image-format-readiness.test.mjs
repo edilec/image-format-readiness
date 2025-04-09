@@ -316,6 +316,31 @@ test('relative image sources resolve from the HTML directory, not the scan root'
   assert.equal(report.images[0].file, 'photo.png')
 })
 
+test('local source lengths 160 and 161 stay legal while long labels remain distinct', async () => {
+  const root = await fixture()
+  const names = ['a'.repeat(155) + '.png', 'a'.repeat(156) + '.png',
+    'a'.repeat(157) + '.png', 'a'.repeat(156) + 'b.png']
+  const labels = []
+  for (const name of names) {
+    await writeFile(join(root, name), png())
+    await writeFile(join(root, 'page.html'), `<img src="/${name}" width="40" height="20" alt="" loading="lazy">`)
+    const report = await checkImageReadiness({ root, html: join(root, 'page.html'), matrix: join(root, 'matrix.json') })
+    assert.equal(report.status, 'pass', JSON.stringify({ nameLength: name.length, report }))
+    assert.deepEqual(report.findings, [])
+    assert.equal(report.summary.checked, 1)
+    assert.equal(report.images.length, 1)
+    assert.ok(report.images[0].file.length <= 160)
+    const cliRun = run(root)
+    assert.equal(cliRun.status, 0, name.length)
+    labels.push(report.images[0].file)
+  }
+  assert.equal(labels[0], names[0])
+  assert.equal(labels[1], names[1])
+  assert.match(labels[2], /sha256:[0-9a-f]{64}/u)
+  assert.match(labels[3], /sha256:[0-9a-f]{64}/u)
+  assert.notEqual(labels[2], labels[3])
+})
+
 test('valid case-insensitive loading and leading-zero dimensions do not raise findings', async () => {
   const root = await fixture('<img src="photo.png" width="040" height="020" alt="" loading="LAZY">')
   const report = await checkImageReadiness({ root, html: join(root, 'page.html'), matrix: join(root, 'matrix.json') })
