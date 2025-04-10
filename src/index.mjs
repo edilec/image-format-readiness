@@ -194,7 +194,10 @@ export async function inspectImageReadiness({ root, html, matrix, limits: custom
   const start = now()
   const tick = () => { if (now() - start > limits.maxElapsedMs) throw new EvidenceError('timeout') }
   let base
-  try { base = await realpath(resolve(root)) } catch { throw new ConfigurationError('invalid-root') }
+  try {
+    base = await realpath(resolve(root))
+    if (!(await stat(base)).isDirectory()) throw new Error('not-directory')
+  } catch { throw new ConfigurationError('invalid-root') }
   const inputs = [resolve(html), resolve(matrix)]
   let policy
   try {

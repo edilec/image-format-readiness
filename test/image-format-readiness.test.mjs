@@ -332,6 +332,23 @@ test('invalid CLI configuration has empty stdout while unreadable HTML has an in
   assert.equal(JSON.parse(unreadable.stdout).status, 'incomplete')
 })
 
+test('an existing regular file cannot be used as the scan root', async () => {
+  const root = await fixture()
+  const matrixPath = join(root, 'matrix.json')
+  const htmlPath = join(root, 'page.html')
+  assert.equal(run(root).status, 0)
+  const asFile = spawnSync(node, [cli, '--root', matrixPath, '--html', htmlPath,
+    '--matrix', matrixPath, '--json'], { encoding: 'utf8' })
+  assert.equal(asFile.status, 2)
+  assert.equal(asFile.stdout, '')
+  await assert.rejects(checkImageReadiness({ root: matrixPath, html: htmlPath, matrix: matrixPath }),
+    { code: 'invalid-root' })
+  const absent = spawnSync(node, [cli, '--root', join(root, 'missing-root'), '--html', htmlPath,
+    '--matrix', matrixPath, '--json'], { encoding: 'utf8' })
+  assert.equal(absent.status, 2)
+  assert.equal(absent.stdout, '')
+})
+
 test('relative image sources resolve from the HTML directory, not the scan root', async () => {
   const root = await fixture()
   await mkdir(join(root, 'pages'))
