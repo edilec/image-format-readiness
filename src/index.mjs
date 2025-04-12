@@ -36,7 +36,7 @@ function limitsOf(custom = {}) {
   if (!custom || Array.isArray(custom) || typeof custom !== 'object') throw new ConfigurationError('invalid-limits')
   const out = { ...defaults }
   for (const [key, value] of Object.entries(custom)) {
-    if (!(key in defaults) || !Number.isSafeInteger(value) || value < 1) throw new ConfigurationError('invalid-limits')
+    if (!Object.hasOwn(defaults, key) || !Number.isSafeInteger(value) || value < 1) throw new ConfigurationError('invalid-limits')
     out[key] = value
   }
   return out

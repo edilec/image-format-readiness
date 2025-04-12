@@ -295,6 +295,16 @@ test('matrix byte cap accepts N and invalid configuration refuses N plus one', a
   assert.equal(run(root).status, 0)
 })
 
+test('inherited object names are not accepted as image limit keys', async () => {
+  const root = await fixture()
+  const opts = { root, html: join(root, 'page.html'), matrix: join(root, 'matrix.json') }
+  assert.equal((await checkImageReadiness({ ...opts, limits: { maxImageBytes: 24 } })).status, 'pass')
+  for (const key of ['toString', 'constructor', '__proto__']) {
+    const limits = JSON.parse(`{"${key}":1}`)
+    await assert.rejects(checkImageReadiness({ ...opts, limits }), { code: 'invalid-limits' })
+  }
+})
+
 test('findings cap allows exactly N and N plus one makes verdict incomplete', async () => {
   const root = await fixture('<img src="photo.png" width="40" height="20" alt="">')
   const opts = { root, html: join(root, 'page.html'), matrix: join(root, 'matrix.json') }
