@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1",
+  "matrixId": "pinned-demo-policy-1",
+  "browsers": [
+    { "id": "demo-browser-1", "formats": ["png", "jpeg", "gif", "webp"] }
+  ]
+}

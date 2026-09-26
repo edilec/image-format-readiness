@@ -1,0 +1,19 @@
+{
+  "name": "image-format-readiness",
+  "version": "0.1.0",
+  "description": "Check image format, dimensions, compression and loading strategy readiness.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "node --check src/index.mjs && node --check src/json.mjs && node --check src/write-guard.mjs && node --check bin/image-format-readiness.mjs && node --check examples/fixture.mjs && node --check examples/run-clean.mjs && node --check examples/run-failing.mjs",
+    "test": "node --test",
+    "check": "npm run lint && npm test"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edilec/image-format-readiness"
+  }
+}
