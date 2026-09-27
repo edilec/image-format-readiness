@@ -16,6 +16,8 @@ The CLI requires `--root`, `--html`, and `--matrix`. `--report FILE` is optional
 
 The matrix is a supplied, pinned policy export: `schemaVersion: "1"`, a visible `matrixId`, and 1–16 unique browser/version rows containing unique subsets of `png`, `jpeg`, `gif`, and `webp`. `examples/matrix.json` is a demonstration policy, **not** a claim about current browser support. No browser or host is contacted.
 
+For a visual walkthrough of the checked-in clean and failing fixtures, see the [Edilec worked example](https://edilec.com/open-source/image-format-readiness/). It also explains what this offline check cannot prove.
+
 ## Rules
 
 | Rule | Severity | Meaning |
