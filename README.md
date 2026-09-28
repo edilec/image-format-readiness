@@ -2,11 +2,17 @@
 
 Inspect one exported HTML file and the local images it references. The checker reports where dimensions, aspect ratio, format policy, alternative text, loading declarations, or byte budgets need attention. It is offline, has zero dependencies, and never edits an image or HTML source.
 
+[![Black-and-white concept image of image tiles passing through a quality-check gate; open the worked example](assets/image-format-readiness-readme-monochrome.webp)](https://edilec.com/open-source/image-format-readiness/)
+
+Concept illustration only. The [worked example](https://edilec.com/open-source/image-format-readiness/) shows the checked-in synthetic clean and failing fixtures; the image is not a tool screenshot or a measured result.
+
 ## Quick start
 
-Node 22 or newer:
+Node 22 or newer. Clone the public repository before running the checked-in examples:
 
 ```sh
+git clone https://github.com/edilec/image-format-readiness.git
+cd image-format-readiness
 node examples/run-clean.mjs
 node examples/run-failing.mjs  # exits 1 by design
 node bin/image-format-readiness.mjs --root ./site-export --html ./site-export/index.html --matrix ./site-export/browser-matrix.json --json
